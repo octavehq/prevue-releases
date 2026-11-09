@@ -1,7 +1,7 @@
 #!/bin/sh
 # Installs PRevue: downloads the latest release's DMG and copies PRevue.app into /Applications.
 #
-#   curl -fsSL https://raw.githubusercontent.com/hayksaryan/prevue-releases/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/octavehq/prevue-releases/main/install.sh | sh
 #
 # Downloaded with curl, the app isn't marked as "from the internet", so macOS opens it without
 # the unsigned-app warning. Options (environment variables):
@@ -10,7 +10,7 @@
 #   PREVUE_NO_OPEN=1           don't open the app afterwards
 set -eu
 
-REPO="hayksaryan/prevue-releases"
+REPO="octavehq/prevue-releases"
 say() { printf '%s\n' "$*"; }
 fail() { printf 'PRevue install: %s\n' "$*" >&2; exit 1; }
 

@@ -7,7 +7,7 @@ This repository holds the macOS installer and releases. Apple Silicon Macs (M1 o
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/hayksaryan/prevue-releases/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/octavehq/prevue-releases/main/install.sh | sh
 ```
 
 The script downloads the latest release, copies `PRevue.app` into `/Applications` (or `~/Applications` if you can't write there) and opens it. Run the same command to update.
