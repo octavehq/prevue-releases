@@ -1,5 +1,9 @@
 #!/bin/sh
-# Installs PRevue: downloads the latest release's DMG and copies PRevue.app into /Applications.
+# Installs PRevue: downloads the latest release's DMG, checks it against the release's SHA256SUMS,
+# and copies PRevue.app into /Applications.
+#
+# The source is octavehq/PRevue's scripts/install.sh; scripts/release.sh copies it to
+# octavehq/prevue-releases (where the curl line below reads it) when it changes.
 #
 #   curl -fsSL https://raw.githubusercontent.com/octavehq/prevue-releases/main/install.sh | sh
 #
@@ -23,6 +27,7 @@ json=$(curl -fsSL -H "Accept: application/vnd.github+json" "$api") || fail "coul
 url=$(printf '%s' "$json" | grep -o '"browser_download_url": *"[^"]*aarch64\.dmg"' | head -1 | sed 's/.*"\(https[^"]*\)"/\1/')
 tag=$(printf '%s' "$json" | grep -o '"tag_name": *"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')
 [ -n "$url" ] || fail "no Apple Silicon DMG found in release ${tag:-?}."
+sums_url=$(printf '%s' "$json" | grep -o '"browser_download_url": *"[^"]*/SHA256SUMS"' | head -1 | sed 's/.*"\(https[^"]*\)"/\1/')
 
 dest="${PREVUE_INSTALL_DIR:-/Applications}"
 [ -d "$dest" ] || mkdir -p "$dest"
@@ -35,6 +40,18 @@ trap cleanup EXIT INT TERM
 
 say "Downloading PRevue ${tag}..."
 curl -fL --progress-bar -o "$tmp/PRevue.dmg" "$url" || fail "download failed."
+# Releases made since scripts/release.sh started publishing SHA256SUMS: a DMG that doesn't match it is never installed.
+# Older releases have none, so those install with a warning.
+if [ -n "$sums_url" ]; then
+  curl -fsSL -o "$tmp/SHA256SUMS" "$sums_url" || fail "couldn't download SHA256SUMS for ${tag}, so the DMG can't be checked. Nothing was installed."
+  want=$(awk -v f="${url##*/}" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS" | head -1)
+  [ -n "$want" ] || fail "SHA256SUMS for ${tag} doesn't list ${url##*/}. Nothing was installed."
+  got=$(shasum -a 256 "$tmp/PRevue.dmg" | awk '{ print $1 }')
+  [ "$got" = "$want" ] || fail "the downloaded DMG doesn't match its SHA256SUMS (got $got, expected $want). It may be damaged or tampered with; nothing was installed."
+  say "Checked the DMG against SHA256SUMS."
+else
+  say "Warning: release ${tag} has no SHA256SUMS (it predates them), so the DMG isn't checked."
+fi
 mnt=$(hdiutil attach -nobrowse -readonly -noautoopen "$tmp/PRevue.dmg" 2>/dev/null | awk -F'\t' '/\/Volumes\//{print $NF}' | tail -1)
 [ -n "$mnt" ] && [ -d "$mnt/PRevue.app" ] || fail "couldn't open the DMG."
 
