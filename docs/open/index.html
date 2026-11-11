@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-I/FOC/EL5PZDe7YLii3YQyAezpuNJqW1hzYru8VD+pY='; style-src 'unsafe-inline'; img-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Open in PRevue</title>
+<style>
+  :root { color-scheme: light dark; --bg: #fff; --text: #1d1d1f; --muted: #6e6e73; --line: #d4d4d8; --accent: rgb(36 92 214); --code: #f4f4f5; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1b1b1c; --text: #ececed; --muted: #9a9aa0; --line: #3d3d40; --accent: rgb(122 166 255); --code: #2a2a2c; } }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--text); font: 15px/22px system-ui, -apple-system, sans-serif; }
+  main { max-width: 440px; padding: 32px 24px; }
+  h1 { font-size: 20px; line-height: 28px; margin: 0 0 6px; font-weight: 600; }
+  p { margin: 0 0 16px; color: var(--muted); }
+  .pr { font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--text); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  a.btn { display: inline-block; padding: 7px 14px; border-radius: 7px; border: 1px solid var(--line); color: var(--text); text-decoration: none; }
+  a.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  pre { background: var(--code); border-radius: 7px; padding: 10px 12px; font-size: 12px; white-space: pre-wrap; word-break: break-all; margin: 0 0 8px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <section id="opening">
+    <h1>Opening PRevue…</h1>
+    <p>Your browser may ask to open PRevue. <span class="pr" id="which"></span></p>
+  </section>
+  <section id="fallback" hidden>
+    <div class="row">
+      <a class="btn primary" id="retry" href="#">Open in PRevue</a>
+      <a class="btn" id="github" href="#">Open on GitHub</a>
+    </div>
+    <p><strong style="color:var(--text)">Don't have PRevue?</strong> It's a Mac app for reviewing pull requests. Install it by running this in Terminal:</p>
+    <pre>curl -fsSL https://raw.githubusercontent.com/octavehq/prevue-releases/main/install.sh | sh</pre>
+    <p><a href="https://github.com/octavehq/prevue-releases#install">Install steps and sign-in</a></p>
+  </section>
+  <section id="bad" hidden>
+    <h1>This link doesn't name a pull request</h1>
+    <p><a href="https://github.com/octavehq/prevue-releases#install">About PRevue</a></p>
+  </section>
+</main>
+<script>
+(function () {
+  // ?pr=owner/repo/number, with GitHub's rules for owner and repo names (as PRevue's own parser).
+  var pr = new URLSearchParams(location.search).get("pr") || "";
+  var m = /^([A-Za-z0-9][A-Za-z0-9-]{0,38})\/([A-Za-z0-9._-]{1,100})\/([1-9][0-9]{0,8})$/.exec(pr);
+  if (!m || m[2] === "." || m[2] === "..") {
+    document.getElementById("opening").hidden = true;
+    document.getElementById("bad").hidden = false;
+    return;
+  }
+  var app = "prevue://pr/" + m[1] + "/" + m[2] + "/" + m[3];
+  var web = "https://github.com/" + m[1] + "/" + m[2] + "/pull/" + m[3];
+  document.getElementById("which").textContent = m[1] + "/" + m[2] + " #" + m[3];
+  document.getElementById("retry").href = app;
+  document.getElementById("github").href = web;
+  location.href = app;
+  setTimeout(function () {
+    document.getElementById("opening").querySelector("h1").textContent = "Didn't open?";
+    document.getElementById("fallback").hidden = false;
+  }, 1500);
+})();
+</script>
+</body>
+</html>
